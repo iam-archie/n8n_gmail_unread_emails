@@ -1,0 +1,196 @@
+{
+  "name": "Gmail UnRead Email",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        0
+      ],
+      "id": "8d6b7330-abad-4020-95bb-ff84770703ae",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 5,
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -368,
+        0
+      ],
+      "id": "7e7d84a7-ed37-4a3b-95ca-01b84d5aac53",
+      "name": "Get many messages",
+      "webhookId": "609b9b14-af69-44da-983b-f82b788ec8c8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "nrC5C7PzyiCyg6bL",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Describe this email in ONE short, direct sentence (8 to 14 words).\n\nRules:\n- Start immediately with the sender's role, category, or company (e.g., \"Invoice from...\", \"Recruiter asking...\", \"Newsletter covering...\", \"Bank alert confirming...\", \"Reminder that...\").\n- Never start with \"This email is...\", \"You received...\", or \"An email from...\".\n- Output ONLY the single sentence with no bullet points, quotes, or line breaks.\n\nFrom: {{ $json.From }}\nSubject: {{ $json.Subject }}\nSnippet: {{ $json.snippet }}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -144,
+        0
+      ],
+      "id": "c76c4b8f-8dd6-4c74-8a3f-df691c34415c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -272,
+        208
+      ],
+      "id": "06d37659-57ac-4f53-b588-5ee3c2e8a000",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "D5Doxvlqv2A4kgfN",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "output"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "776f868f-741d-4b9d-b88e-1ce0473f139e",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "sendTo": "sathishreachout@gmail.com",
+        "subject": "Your Latest 5 Unread Emails — Summary",
+        "emailType": "text",
+        "message": "={{ $json.output.join('\\n') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "26320f17-0c75-4a99-bc70-7e546bc2bbd9",
+      "name": "Send a message",
+      "webhookId": "fd908e70-3a10-4c9f-aa4f-e5c48cdef16c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "nrC5C7PzyiCyg6bL",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get many messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many messages": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "44821395-07a9-47dc-8e01-1ba983029f6a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e4b16e5146c421f3ce7d3897eb2826dbf5c64fb455ff32476abff9c92db8ea4d"
+  },
+  "nodeGroups": [],
+  "id": "dDyXPrh9hRwb1MMK",
+  "tags": []
+}
